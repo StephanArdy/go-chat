@@ -1,0 +1,357 @@
+definitions:
+  dto.FriendRequestParameter:
+    properties:
+      friend_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.FriendRequestResponse:
+    properties:
+      _id:
+        type: string
+      created_at:
+        type: string
+      receiver_id:
+        type: string
+      sender_id:
+        type: string
+      status:
+        type: string
+      update_at:
+        type: string
+    type: object
+  dto.GetFriendListsResponse:
+    properties:
+      friends:
+        items:
+          type: string
+        type: array
+      user_id:
+        type: string
+    type: object
+  dto.GetMessagesResponse:
+    properties:
+      _id:
+        type: string
+      chat_room_id:
+        type: string
+      message_text:
+        type: string
+      receiver_id:
+        type: string
+      sender_id:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  dto.GetorCreateChatRoomResponse:
+    properties:
+      chat_room_id:
+        type: string
+      user_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  dto.LoginDataRequest:
+    properties:
+      identifier:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.LoginDataResponse:
+    properties:
+      _id:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      friends:
+        items:
+          type: string
+        type: array
+      password:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.RegisterDataRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.RegisterDataResponse:
+    properties:
+      _id:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.UpdateFriendRequestResponse:
+    properties:
+      created_at:
+        type: string
+      receiver_id:
+        type: string
+      request_id:
+        type: string
+      sender_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.UpdateRequestParameter:
+    properties:
+      acceptance:
+        type: boolean
+      receiver_id:
+        type: string
+      request_id:
+        type: string
+      sender_id:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a Chat-App server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms
+  title: Swagger Chat-App API
+  version: "1.0"
+paths:
+  /friend-request/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of friend requests for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.FriendRequestResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Get friend requests
+      tags:
+      - friends
+  /friend-request/respond:
+    post:
+      consumes:
+      - application/json
+      description: Accept or reject a friend request
+      parameters:
+      - description: Friend Request Response
+        in: body
+        name: response
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateRequestParameter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateFriendRequestResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Respond to a friend request
+      tags:
+      - friends
+  /friends/add:
+    post:
+      consumes:
+      - application/json
+      description: Send a friend request to another user
+      parameters:
+      - description: Friend Request Data
+        in: body
+        name: friend
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FriendRequestParameter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.FriendRequestResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Add a friend
+      tags:
+      - friends
+  /friends/list/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of friends for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetFriendListsResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Get friend lists
+      tags:
+      - friends
+  /messages/{roomID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of messages for a specific chat room
+      parameters:
+      - description: Chat Room ID
+        in: path
+        name: roomId
+        required: true
+        type: string
+      - description: Limit the number of messages returned
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetMessagesResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Get messages by room ID
+      tags:
+      - messages
+  /messages/ChatRoom:
+    post:
+      consumes:
+      - application/json
+      description: Retrieve an existing chat room for the specified users or create
+        a new one if it doesn't exist.
+      parameters:
+      - description: ID of the user in the chat room
+        in: query
+        name: user_id
+        required: true
+        type: string
+      - description: ID of the friend in the chat room
+        in: query
+        name: friend_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetorCreateChatRoomResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Get or Create Chat Room
+      tags:
+      - messages
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a token
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginDataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginDataResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Login a user
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterDataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterDataResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Register a new user
+      tags:
+      - users
+swagger: "2.0"
