@@ -4,7 +4,8 @@ import "time"
 
 type GetMessagesRequest struct {
 	RoomID string `json:"chat_room_id"`
-	Limit  int    `json:"limit"`
+	Limit  int64    `json:"limit"`
+	Offset int64    `json:"offset"`
 }
 
 type GetMessagesResponse struct {
@@ -17,6 +18,6 @@ type GetMessagesResponse struct {
 }
 
 type GetorCreateChatRoomResponse struct {
-	ChatRoomID string `json:"chat_room_id"`
-	UserIDs []string `json:"user_ids"`
+	ChatRoomID string   `json:"chat_room_id"`
+	UserIDs    []string `json:"user_ids"`
 }

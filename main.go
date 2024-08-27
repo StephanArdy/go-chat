@@ -52,9 +52,9 @@ func main() {
 	userService := service.NewUserService(authRepository, userRepository)
 	userController := controller.NewUserController(userService)
 
-	router := app.SetupRoutes(authController, chatController, userController)
-
 	hub := websocket.NewHub()
+
+	router := app.SetupRoutes(authController, chatController, userController, hub, chatRepository)
 
 	http.Handle("/swagger/", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
@@ -70,9 +70,6 @@ func main() {
 	handler := c.Handler(router)
 
 	http.Handle("/", handler)
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		websocket.ServeWs(hub, w, r, chatRepository)
-	})
 
 	go hub.Run()
 

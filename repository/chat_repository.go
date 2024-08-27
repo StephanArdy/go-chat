@@ -15,7 +15,7 @@ import (
 
 type ChatRepository interface {
 	SaveMessage(ctx context.Context, message model.Message) (err error)
-	GetMessages(ctx context.Context, roomID string, limit int64) (messages []model.Message, err error)
+	GetMessages(ctx context.Context, roomID string, limit int64, offset int64) (messages []model.Message, err error)
 	CreateChatRoom(ctx context.Context, userID1 string, userID2 string) (chatRoom model.ChatRoom, err error)
 	GetChatRoom(ctx context.Context, userID1 string, userID2 string) (chatRoom model.ChatRoom, err error)
 	// Create Notification
@@ -47,11 +47,12 @@ func (c *ChatRepositoryImpl) SaveMessage(ctx context.Context, message model.Mess
 	return nil
 }
 
-func (c *ChatRepositoryImpl) GetMessages(ctx context.Context, roomID string, limit int64) (messages []model.Message, err error) {
+func (c *ChatRepositoryImpl) GetMessages(ctx context.Context, roomID string, limit int64, offset int64) (messages []model.Message, err error) {
 	collection := c.mongo.Database(os.Getenv("MONGO_DATABASE")).Collection("Messages")
 
 	opts := options.FindOptions{
 		Limit: &limit,
+		Skip: &offset,
 		Sort:  bson.D{{"timestamp", -1}},
 	}
 

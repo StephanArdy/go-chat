@@ -50,7 +50,7 @@ func (u *UserControllerImpl) AddFriend(w http.ResponseWriter, r *http.Request, p
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to add new friend", http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{
@@ -93,7 +93,7 @@ func (u *UserControllerImpl) UpdateFriendRequest(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to update friend request", http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{
@@ -129,7 +129,7 @@ func (u *UserControllerImpl) GetFriendRequests(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to get friend requests", http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{
@@ -165,7 +165,7 @@ func (u *UserControllerImpl) GetFriendLists(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to get friend lists", http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{

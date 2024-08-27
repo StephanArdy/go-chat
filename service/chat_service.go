@@ -23,7 +23,7 @@ func NewChatService(chatRepository repository.ChatRepository) ChatService {
 }
 
 func (c *ChatServiceImpl) GetMessages(ctx context.Context, data dto.GetMessagesRequest) (resp []dto.GetMessagesResponse, err error) {
-	messages, err := c.chatRepository.GetMessages(ctx, data.RoomID, int64(data.Limit))
+	messages, err := c.chatRepository.GetMessages(ctx, data.RoomID, data.Limit, data.Offset)
 	if err != nil {
 		log.Println(err)
 		return []dto.GetMessagesResponse{}, err

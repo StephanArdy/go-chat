@@ -48,7 +48,7 @@ func (a *AuthControllerImpl) Register(w http.ResponseWriter, r *http.Request, _ 
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to register new user", http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{
@@ -92,7 +92,7 @@ func (a *AuthControllerImpl) Login(w http.ResponseWriter, r *http.Request, _ htt
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to verify login, try again later!", http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{

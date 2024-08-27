@@ -38,6 +38,7 @@ func NewChatController(chatService service.ChatService) ChatController {
 func (c *ChatControllerImpl) GetMessages(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 	roomID := param.ByName("roomId")
 	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
 
 	limit, err := strconv.ParseInt(limitStr, 10, 64)
 	if err != nil {
@@ -46,9 +47,16 @@ func (c *ChatControllerImpl) GetMessages(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid offset parameter", http.StatusBadRequest)
+	}
+
 	messagesRequest := dto.GetMessagesRequest{
 		RoomID: roomID,
-		Limit:  int(limit),
+		Limit:  limit,
+		Offset: offset,
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -63,8 +71,8 @@ func (c *ChatControllerImpl) GetMessages(w http.ResponseWriter, r *http.Request,
 	data, err := c.chatService.GetMessages(ctx, messagesRequest)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Failed to get messages", http.StatusBadRequest)
-		panic(err)
+		http.Error(w, "Failed to get messages", http.StatusInternalServerError)
+		return
 	}
 
 	resp := dto.Response{
@@ -106,7 +114,7 @@ func (c *ChatControllerImpl) GetorCreateChatRoom(w http.ResponseWriter, r *http.
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to get or create ChatRoom", http.StatusInternalServerError)
-		panic(err)
+		return
 	}
 
 	resp := dto.Response{

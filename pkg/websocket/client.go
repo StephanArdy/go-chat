@@ -1,8 +1,9 @@
 package websocket
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
+	"go-chat/dto"
 	"go-chat/model"
 	"go-chat/repository"
 	"log"
@@ -37,6 +38,11 @@ type Client struct {
 }
 
 func (c *Client) readPump() {
+	var (
+		msgData     map[string]interface{}
+		textMessage string
+	)
+
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
@@ -50,21 +56,80 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		err = c.chatRepository.SaveMessage(context.Background(), model.Message{
-			MessageID:   primitive.NewObjectID(),
-			SenderID:    c.SenderID,
-			ReceiverID:  c.ReceiverID,
-			MessageText: string(message),
-			Timestamp:   time.Now(),
-			ChatRoomID:  c.roomID,
-		})
-		if err != nil {
-			log.Println(err)
-		}
-		c.hub.broadcast <- message
-	}
 
+		if err := json.Unmarshal(message, &msgData); err != nil {
+			log.Println("Failed to parse message:", err)
+			continue
+		}
+
+		if action, ok := msgData["action"].(string); ok && action == "get_messages" {
+			roomID, ok := msgData["room_id"].(string)
+			if !ok {
+				log.Println("room_id is not a string")
+				continue
+			}
+
+			limit, ok := msgData["limit"].(float64)
+			if !ok {
+				log.Println("limit is not a number")
+				continue
+			}
+
+			offset, ok := msgData["offset"].(float64)
+			if !ok {
+				log.Println("offset is not a number")
+				continue
+			}
+
+			messageRequest := dto.GetMessagesRequest{
+				RoomID: roomID,
+				Limit:  int64(limit),
+				Offset: int64(offset),
+			}
+
+			messages, err := c.chatRepository.GetMessages(context.Background(), messageRequest.RoomID, messageRequest.Limit, messageRequest.Offset)
+			if err != nil {
+				log.Println("Failed to retrieve messages: ", err)
+				return
+			}
+
+			if len(messages) == 0 {
+				response := map[string]interface{}{
+					"action": "messages",
+					"data":   model.Message{},
+				}
+				responseBytes, _ := json.Marshal(response)
+				c.send <- responseBytes
+				continue
+			} else {
+				response := map[string]interface{}{
+					"action": "messages",
+					"data":   messages,
+				}
+				responseBytes, _ := json.Marshal(response)
+				c.send <- responseBytes
+				continue
+			}
+		}
+
+		if msgData["action"] == "send_message" {
+			textMessage = msgData["message_text"].(string)
+
+			err = c.chatRepository.SaveMessage(context.Background(), model.Message{
+				MessageID:   primitive.NewObjectID(),
+				SenderID:    c.SenderID,
+				ReceiverID:  c.ReceiverID,
+				MessageText: textMessage,
+				Timestamp:   time.Now(),
+				ChatRoomID:  c.roomID,
+			})
+			if err != nil {
+				log.Println("Failed to save message: ", err)
+				return
+			}
+			c.hub.broadcast <- message
+		}
+	}
 }
 
 func (c *Client) writePump() {
@@ -101,13 +166,22 @@ func (c *Client) writePump() {
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, chatRepository repository.ChatRepository) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Println("Websocket upgrade error:", err)
+		http.Error(w, "Failed to upgrade Websocket", http.StatusInternalServerError)
 		return
 	}
+	log.Println("Websocket connection successfully upgraded")
 
-	roomID := r.URL.Query().Get("roomID")
-	senderID := r.URL.Query().Get("userID")
-	receiverID := r.URL.Query().Get("receiverID")
+	params := r.URL.Query()
+	roomID := params.Get("roomID")
+	senderID := params.Get("userID")
+	receiverID := params.Get("receiverID")
+
+	if roomID == "" || senderID == "" || receiverID == "" {
+		log.Println("Missing required query parameters")
+		http.Error(w, "Missing required query parameters", http.StatusBadRequest)
+		return
+	}
 
 	client := &Client{
 		hub:            hub,
